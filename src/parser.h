@@ -227,27 +227,36 @@ static std::unique_ptr<ExprAST> ParseIfExpr() {
     // TODO 3.3: If文のパーシングを実装してみよう。
     // 1. ParseIfExprに来るということは現在のトークンが"if"なので、
     // トークンを次に進めます。
-
+    getNextToken();
     // 2. ifの次はbranching conditionを表すexpressionがある筈なので、
     // ParseExpressionを呼んでconditionをパースします。
-
+    auto condition = ParseExpression();
     // 3. "if x < 4 then .."のような文の場合、今のトークンは"then"である筈なので
     // それをチェックし、トークンを次に進めます。
-
+    if (CurTok != tok_then ) {
+      return LogError("`then` does not exist.");
+    } else {
+      getNextToken();
+    }
     // 4. "then"ブロックのexpressionをParseExpressionを呼んでパースします。
-
+    auto then_expression = ParseExpression();
     // 5. 3と同様、今のトークンは"else"である筈なのでチェックし、トークンを次に進めます。
-
+    if (CurTok != tok_else ) {
+      return LogError("`else` does not exist.");
+    } else {
+      getNextToken();
+    }
     // 6. "else"ブロックのexpressionをParseExpressionを呼んでパースします。
-
+    auto else_expression = ParseExpression();
     // 7. IfExprASTを作り、returnします。
+    std::unique_ptr<ExprAST> IfExpAST (new IfExprAST(std::move(condition),std::move(then_expression),std::move(else_expression)));
+    return IfExpAST;
 }
 
 // ParsePrimary - NumberASTか括弧をパースする関数
 static std::unique_ptr<ExprAST> ParsePrimary() {
+  printf("%d\n", CurTok);
     switch (CurTok) {
-        default:
-            return LogError("unknown token when expecting an expression");
         case tok_identifier:
             return ParseIdentifierExpr();
         case tok_number:
@@ -256,6 +265,8 @@ static std::unique_ptr<ExprAST> ParsePrimary() {
             return ParseParenExpr();
         case tok_if:
             return ParseIfExpr();
+        default:
+            return LogError("unknown token when expecting an expression");
     }
 }
 
